@@ -12,8 +12,6 @@ import kotlin.test.*
 
 class DefaultMORDatabaseTest {
 
-    private val ioScheduler = TestScheduler(isManualProcessing = true)
-
     private lateinit var driver: SqlDriver
     private lateinit var testDatabase : DefaultMORDatabase
     private lateinit var actualDatabase : MyOwnRecipes
@@ -21,7 +19,7 @@ class DefaultMORDatabaseTest {
     @BeforeTest
     fun createDatabase() {
         overrideSchedulers(
-            io = { ioScheduler }
+            io = { TestScheduler() }
         )
 
         driver = createDriver()
@@ -43,7 +41,6 @@ class DefaultMORDatabaseTest {
         val recipe = buildRecipe()
 
         testDatabase.addRecipe(recipe = recipe).test()
-        ioScheduler.process()
 
         val actual = actualDatabase.recipeQueries.selectAllRecipes().executeAsList()
         val expected = listOf(recipe.toRawRecipe())
@@ -59,7 +56,6 @@ class DefaultMORDatabaseTest {
 
         val recipe = buildRecipe(tags = listOf(tag1, tag2))
         testDatabase.addRecipe(recipe).test()
-        ioScheduler.process()
 
         val actual = actualDatabase.recipeToTagQueries.selectAll().executeAsList()
         val expected = listOf(
@@ -76,7 +72,6 @@ class DefaultMORDatabaseTest {
 
         val recipe = buildRecipe(tags = listOf(tag1, tag2))
         testDatabase.addRecipe(recipe).test()
-        ioScheduler.process()
 
         //test for added Tags
         val actualTags = actualDatabase.tagQueries.selectAll().executeAsList()
@@ -104,7 +99,6 @@ class DefaultMORDatabaseTest {
 
         val recipe = buildRecipe(ingredients = listOf(ingredient1, ingredient2))
         testDatabase.addRecipe(recipe).test()
-        ioScheduler.process()
 
         val actual = actualDatabase.recipeToIngredientQueries.selectAll().executeAsList()
         val expected = listOf(
@@ -121,7 +115,6 @@ class DefaultMORDatabaseTest {
 
         val recipe = buildRecipe(ingredients = listOf(ingredient1, ingredient2))
         testDatabase.addRecipe(recipe).test()
-        ioScheduler.process()
 
         //test for added Ingredients
         val actualIngredients = actualDatabase.ingredientQueries.selectAll().executeAsList()
@@ -145,7 +138,6 @@ class DefaultMORDatabaseTest {
         actualDatabase.recipeQueries.addRecipe(name = "test", author = "a", rating = 0, workTimeInMinutes = 0, cookTimeInMinutes = 0, difficulty = Difficulty.NotDefined, portions = 1, text = "test")
 
         testDatabase.deleteRecipe(1L).test()
-        ioScheduler.process()
 
         val actualRecipes = actualDatabase.recipeQueries.selectAllRecipes().executeAsList()
         assertContentEquals(emptyList(), actualRecipes)
@@ -162,7 +154,6 @@ class DefaultMORDatabaseTest {
         actualDatabase.recipeQueries.addTagLink(recipeId = 2L, tagId = 2L)
 
         testDatabase.deleteRecipe(1L).test()
-        ioScheduler.process()
 
         //test for tags
         val actualTags = actualDatabase.tagQueries.selectAll().executeAsList()
@@ -186,7 +177,6 @@ class DefaultMORDatabaseTest {
         actualDatabase.recipeQueries.addIngredientLink(recipeId = 2L, ingredientId = 2L, amount = 1.0, unit = IngredientUnit.None)
 
         testDatabase.deleteRecipe(1L).test()
-        ioScheduler.process()
 
         //test for ingredients
         val actualIngredients = actualDatabase.ingredientQueries.selectAll().executeAsList()
@@ -214,7 +204,6 @@ class DefaultMORDatabaseTest {
         actualDatabase.recipeQueries.addIngredientLink(recipeId = expected.id, ingredientId = ingredient.id, amount = ingredient.amount, unit = ingredient.unit)
 
         val actual = testDatabase.selectRecipe(expected.id).test()
-        ioScheduler.process()
 
         assertEquals(expected, actual.value)
     }
@@ -235,7 +224,6 @@ class DefaultMORDatabaseTest {
         )
 
         testDatabase.updateRecipe(expected).test()
-        ioScheduler.process()
 
         val actual = actualDatabase.recipeQueries.selectRecipe(1L).executeAsOne()
         assertEquals(expected.toRawRecipe(), actual)
@@ -256,7 +244,6 @@ class DefaultMORDatabaseTest {
         testDatabase.updateRecipe(
             recipe.copy(tags = listOf(tag1, tag3))
         ).test()
-        ioScheduler.process()
 
         val actualTags = actualDatabase.tagQueries.selectAll().executeAsList()
         val expectedTags = listOf(RawTag(id = tag1.id, name = tag1.name), RawTag(id = 3L, name = tag3.name))
@@ -282,7 +269,6 @@ class DefaultMORDatabaseTest {
         testDatabase.updateRecipe(
             recipe.copy(ingredients = listOf(ingredient1, ingredient3))
         ).test()
-        ioScheduler.process()
 
         val actualIngredients = actualDatabase.ingredientQueries.selectAll().executeAsList()
         val expectedIngredients = listOf(RawIngredient(id = ingredient1.id, name = ingredient1.name), RawIngredient(id = 3L, name = ingredient3.name))
@@ -318,7 +304,6 @@ class DefaultMORDatabaseTest {
         actualDatabase.recipeQueries.addIngredientLink(recipeId = searchedRecipe.id, ingredientId = filterIngredientsSearch[0].id, amount = filterIngredientsSearch[0].amount, unit = filterIngredientsSearch[0].unit)
 
         val actual = testDatabase.searchRecipe(name = nameSearch, author = authorSearch, rating = ratingSearch, maxTime = maxTimeSearch, difficulty = difficultySearch, tags = filterTagsSearch, ingredients = filterIngredientsSearch).test()
-        ioScheduler.process()
 
         val expected = listOf(PreviewRecipe(id = searchedRecipe.id, name = searchedRecipe.name, author = searchedRecipe.author, rating = searchedRecipe.rating, difficulty = searchedRecipe.difficulty, time = searchedRecipe.cookTimeInMinutes + searchedRecipe.workTimeInMinutes, tags = filterTagsSearch))
         assertContentEquals(expected, actual.value)
@@ -327,16 +312,12 @@ class DefaultMORDatabaseTest {
     @Test
     fun `WHEN ingredients change THEN the change is observed`() {
         val actual = testDatabase.observeIngredients().test()
-        ioScheduler.process()
 
         val ingredient1 = RawIngredient(1L, "ingredient1")
         actualDatabase.recipeQueries.addIngredient(ingredient1.name)
-        ioScheduler.process()
         val ingredient2 = RawIngredient(2L, "ingredient2")
         actualDatabase.recipeQueries.addIngredient(ingredient2.name)
-        ioScheduler.process()
         actualDatabase.recipeQueries.removeUnusedIngredients()
-        ioScheduler.process()
 
         val expected = listOf(emptyList(), listOf(ingredient1), listOf(ingredient1, ingredient2), emptyList())
         assertContentEquals(expected, actual.values)
@@ -345,16 +326,12 @@ class DefaultMORDatabaseTest {
     @Test
     fun `WHEN tags change THEN the change is observed`() {
         val actual = testDatabase.observeTags().test()
-        ioScheduler.process()
 
         val tag1 = RawTag(1L, "tag1")
         actualDatabase.recipeQueries.addTag(tag1.name)
-        ioScheduler.process()
         val tag2 = RawTag(2L, "tag2")
         actualDatabase.recipeQueries.addTag(tag2.name)
-        ioScheduler.process()
         actualDatabase.recipeQueries.removeUnusedTags()
-        ioScheduler.process()
 
         val expected = listOf(emptyList(), listOf(tag1), listOf(tag1, tag2), emptyList())
         assertContentEquals(expected, actual.values)
