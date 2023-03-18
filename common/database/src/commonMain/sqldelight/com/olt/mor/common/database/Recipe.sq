@@ -1,0 +1,117 @@
+import com.olt.mor.common.database.data.Difficulty;
+
+CREATE TABLE IF NOT EXISTS RawRecipe (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    author TEXT NOT NULL DEFAULT "",
+    rating INTEGER AS Int NOT NULL DEFAULT 0,
+    workTimeInMinutes INTEGER AS Int NOT NULL DEFAULT 0,
+    cookTimeInMinutes INTEGER AS Int NOT NULL DEFAULT 0,
+    difficulty INTEGER AS Difficulty NOT NULL DEFAULT 0,
+    portions INTEGER AS Int NOT NULL DEFAULT 1,
+    text TEXT NOT NULL DEFAULT ""
+);
+
+selectAllRecipes:
+SELECT *
+FROM RawRecipe;
+
+deleteRecipe:
+DELETE FROM RawRecipe
+WHERE id = :id;
+
+removeUnusedTags:
+DELETE FROM RawTag
+WHERE id NOT IN (
+    SELECT tagId
+    FROM RecipeToTag
+);
+
+removeUnusedIngredients:
+DELETE FROM RawIngredient
+WHERE id NOT IN (
+    SELECT ingredientId
+    FROM RecipeToIngredient
+);
+
+addRecipe:
+INSERT INTO RawRecipe (name, author, rating, workTimeInMinutes, cookTimeInMinutes, difficulty, portions, text)
+VALUES (:name, :author, :rating, :workTimeInMinutes, :cookTimeInMinutes, :difficulty, :portions, :text);
+
+addTag:
+INSERT INTO RawTag (name)
+VALUES (:name);
+
+addTagLink:
+INSERT INTO RecipeToTag (recipeId, tagId)
+VALUES (:recipeId, :tagId);
+
+addIngredient:
+INSERT INTO RawIngredient (name)
+VALUES (:name);
+
+addIngredientLink:
+INSERT INTO RecipeToIngredient (recipeId, ingredientId, amount, unit)
+VALUES (:recipeId, :ingredientId, :amount, :unit);
+
+selectRecipe:
+SELECT *
+FROM RawRecipe
+WHERE id = :id;
+
+selectTags:
+SELECT RawTag.id, name
+FROM RecipeToTag
+INNER JOIN RawTag
+ON tagId = RawTag.id
+WHERE recipeId = :id;
+
+selectAllTags:
+SELECT RawTag.id, name
+FROM RecipeToTag
+INNER JOIN RawTag
+ON tagId = RawTag.id;
+
+selectIngredients:
+SELECT RawIngredient.id, name, amount, unit
+FROM RecipeToIngredient
+INNER JOIN RawIngredient
+ON ingredientId = RawIngredient.id
+WHERE recipeId = :id;
+
+updateRecipe:
+UPDATE RawRecipe
+SET name = :name, author = :author, rating = :rating, workTimeInMinutes = :workTimeInMinutes, cookTimeInMinutes = :cookTimeInMinutes, difficulty = :difficulty, portions = :portions, text = :text
+WHERE id = :id;
+
+deleteTagLink:
+DELETE FROM RecipeToTag
+WHERE recipeId = :id;
+
+deleteIngredientLink:
+DELETE FROM RecipeToIngredient
+WHERE recipeId = :id;
+
+searchRecipe:
+SELECT FilterResult.id, name, author, rating, time, difficulty, GROUP_CONCAT(tagId) AS tags
+FROM (
+    SELECT DISTINCT RawRecipe.id, name, author, rating, (workTimeInMinutes + cookTimeInMinutes) AS time, difficulty
+    FROM RawRecipe
+    LEFT JOIN RecipeToTag
+    ON RecipeToTag.recipeId = RawRecipe.id
+    LEFT JOIN RecipeToIngredient
+    ON RecipeToIngredient.recipeId = RawRecipe.id
+    WHERE IIF(:filterTags = TRUE, tagId IN :tags, TRUE)
+    AND IIF(:filterIngredients = TRUE, ingredientId IN :ingredients, TRUE)
+    AND name LIKE :name
+    AND author LIKE :author
+    AND rating >= :rating
+    AND (workTimeInMinutes + cookTimeInMinutes) <= :time
+    AND difficulty = :difficulty
+) AS FilterResult
+LEFT JOIN RecipeToTag
+ON recipeId = FilterResult.id
+GROUP BY FilterResult.id;
+
+getLastInsertId:
+SELECT last_insert_rowid();

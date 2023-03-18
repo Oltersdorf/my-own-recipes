@@ -1,0 +1,15 @@
+import com.olt.mor.common.database.data.IngredientUnit;
+
+CREATE TABLE IF NOT EXISTS RecipeToIngredient (
+    id INTEGER PRIMARY KEY,
+    recipeId INTEGER NOT NULL,
+    ingredientId INTEGER NOT NULL,
+    amount REAL NOT NULL DEFAULT 1.0,
+    unit TEXT AS IngredientUnit NOT NULL DEFAULT "None",
+    FOREIGN KEY (recipeId) REFERENCES RawRecipe (id) ON DELETE CASCADE,
+    FOREIGN KEY (ingredientId) REFERENCES RawIngredient (id) ON DELETE CASCADE
+);
+
+selectAll:
+SELECT *
+FROM RecipeToIngredient;

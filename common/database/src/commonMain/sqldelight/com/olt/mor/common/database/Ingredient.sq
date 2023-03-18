@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS RawIngredient (
+    id INTEGER PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL
+);
+
+selectAll:
+SELECT *
+FROM RawIngredient;

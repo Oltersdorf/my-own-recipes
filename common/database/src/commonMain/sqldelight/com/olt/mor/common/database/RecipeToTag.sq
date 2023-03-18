@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS RecipeToTag (
+    id INTEGER PRIMARY KEY,
+    recipeId INTEGER NOT NULL,
+    tagId INTEGER NOT NULL,
+    FOREIGN KEY (recipeId) REFERENCES RawRecipe (id) ON DELETE CASCADE,
+    FOREIGN KEY (tagId) REFERENCES RawTag (id) ON DELETE CASCADE
+);
+
+selectAll:
+SELECT *
+FROM RecipeToTag;
