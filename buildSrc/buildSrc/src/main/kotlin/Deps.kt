@@ -37,4 +37,19 @@ object Deps {
             const val reaktiveTesting = "com.badoo.reaktive:reaktive-testing:$VERSION"
         }
     }
+
+    object ArkIvanov {
+        object MVIKotlin {
+            private const val VERSION = "3.2.0"
+            const val rx = "com.arkivanov.mvikotlin:rx:$VERSION"
+            const val mvikotlin = "com.arkivanov.mvikotlin:mvikotlin:$VERSION"
+            const val mvikotlinMain = "com.arkivanov.mvikotlin:mvikotlin-main:$VERSION"
+            const val mvikotlinExtensionsReaktive = "com.arkivanov.mvikotlin:mvikotlin-extensions-reaktive:$VERSION"
+        }
+
+        object Decompose {
+            private const val VERSION = "1.0.0"
+            const val decompose = "com.arkivanov.decompose:decompose:$VERSION"
+        }
+    }
 }
