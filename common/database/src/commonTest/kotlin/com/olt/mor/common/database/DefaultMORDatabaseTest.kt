@@ -10,12 +10,12 @@ import com.olt.mor.database.MyOwnRecipes
 import com.squareup.sqldelight.db.SqlDriver
 import kotlin.test.*
 
-class DefaultMyOwnRecipesDatabaseTest {
+class DefaultMORDatabaseTest {
 
     private val ioScheduler = TestScheduler(isManualProcessing = true)
 
     private lateinit var driver: SqlDriver
-    private lateinit var testDatabase : DefaultMyOwnRecipesDatabase
+    private lateinit var testDatabase : DefaultMORDatabase
     private lateinit var actualDatabase : MyOwnRecipes
 
     @BeforeTest
@@ -30,7 +30,7 @@ class DefaultMyOwnRecipesDatabaseTest {
             RawRecipeAdapter = RawRecipe.Adapter(difficultyAdapter = Difficulty.Adapter()),
             RecipeToIngredientAdapter = RecipeToIngredient.Adapter(unitAdapter = IngredientUnit.Adapter())
         )
-        testDatabase = DefaultMyOwnRecipesDatabase(database = actualDatabase)
+        testDatabase = DefaultMORDatabase(database = actualDatabase)
     }
 
     @AfterTest

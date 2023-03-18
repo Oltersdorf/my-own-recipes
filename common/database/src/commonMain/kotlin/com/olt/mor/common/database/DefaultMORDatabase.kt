@@ -8,11 +8,11 @@ import com.olt.mor.common.database.data.*
 import com.olt.mor.database.MyOwnRecipes
 import com.squareup.sqldelight.db.SqlDriver
 
-class DefaultMyOwnRecipesDatabase(
+class DefaultMORDatabase(
     database: MyOwnRecipes
 ) : SqlDatabase<MyOwnRecipes>(
     database = database
-), MyOwnRecipesDatabase {
+), MORDatabase {
 
     constructor(driver: SqlDriver) : this(
         database = MyOwnRecipes(

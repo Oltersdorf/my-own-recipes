@@ -5,7 +5,7 @@ import com.badoo.reaktive.maybe.Maybe
 import com.badoo.reaktive.observable.Observable
 import com.olt.mor.common.database.data.*
 
-interface MyOwnRecipesDatabase {
+interface MORDatabase {
 
     fun addRecipe(recipe: Recipe): Completable
 
