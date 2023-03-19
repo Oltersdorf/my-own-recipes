@@ -33,21 +33,13 @@ object Deps {
         }
     }
 
-    object Badoo {
-        object Reaktive {
-            private const val VERSION = "1.2.3"
-            const val reaktive = "com.badoo.reaktive:reaktive:$VERSION"
-            const val reaktiveTesting = "com.badoo.reaktive:reaktive-testing:$VERSION"
-        }
-    }
-
     object ArkIvanov {
         object MVIKotlin {
             private const val VERSION = "3.2.0"
             const val rx = "com.arkivanov.mvikotlin:rx:$VERSION"
             const val mvikotlin = "com.arkivanov.mvikotlin:mvikotlin:$VERSION"
             const val mvikotlinMain = "com.arkivanov.mvikotlin:mvikotlin-main:$VERSION"
-            const val mvikotlinExtensionsReaktive = "com.arkivanov.mvikotlin:mvikotlin-extensions-reaktive:$VERSION"
+            const val mvikotlinExtensionsCoroutines = "com.arkivanov.mvikotlin:mvikotlin-extensions-coroutines:$VERSION"
         }
 
         object Decompose {

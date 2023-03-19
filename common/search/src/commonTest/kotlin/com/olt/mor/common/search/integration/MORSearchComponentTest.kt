@@ -3,8 +3,6 @@ package com.olt.mor.common.search.integration
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
-import com.badoo.reaktive.scheduler.overrideSchedulers
-import com.badoo.reaktive.test.scheduler.TestScheduler
 import com.olt.mor.common.search.MORSearch
 import com.olt.mor.common.search.MORSearch.Model
 import kotlin.test.BeforeTest
@@ -19,11 +17,6 @@ class MORSearchComponentTest {
 
     @BeforeTest
     fun before() {
-        overrideSchedulers(
-            main = { TestScheduler() },
-            io = { TestScheduler() }
-        )
-
         morSearch = MORSearchComponent(
             componentContext = DefaultComponentContext(lifecycle = lifecycle),
             storeFactory = DefaultStoreFactory()
