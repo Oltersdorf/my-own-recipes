@@ -1,16 +1,18 @@
 object Deps {
     object JetBrains {
         object Kotlin {
-            private val VERSION = "1.8.0"
-            val gradlePlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:$VERSION"
-            val testCommon = "org.jetbrains.kotlin:kotlin-test-common:$VERSION"
-            val testJunit = "org.jetbrains.kotlin:kotlin-test-junit5:$VERSION"
-            val testCommonAnnotation = "org.jetbrains.kotlin:kotlin-test-annotations-common:$VERSION"
+            private const val VERSION = "1.8.0"
+            const val gradlePlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:$VERSION"
+            const val testCommon = "org.jetbrains.kotlin:kotlin-test-common:$VERSION"
+            const val testJunit = "org.jetbrains.kotlin:kotlin-test-junit5:$VERSION"
+            const val testCommonAnnotation = "org.jetbrains.kotlin:kotlin-test-annotations-common:$VERSION"
+            private const val XVERSION = "1.6.4"
+            const val testCoroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-test:$XVERSION"
         }
 
         object Compose {
-            private val VERSION = "1.3.0"
-            val gradlePlugin = "org.jetbrains.compose:compose-gradle-plugin:$VERSION"
+            private const val VERSION = "1.3.0"
+            const val gradlePlugin = "org.jetbrains.compose:compose-gradle-plugin:$VERSION"
         }
     }
 
@@ -27,6 +29,7 @@ object Deps {
             private const val VERSION = "1.5.5"
             const val gradlePlugin = "com.squareup.sqldelight:gradle-plugin:$VERSION"
             const val sqliteDriver = "com.squareup.sqldelight:sqlite-driver:$VERSION"
+            const val coroutineExtensions = "com.squareup.sqldelight:coroutines-extensions:$VERSION"
         }
     }
 

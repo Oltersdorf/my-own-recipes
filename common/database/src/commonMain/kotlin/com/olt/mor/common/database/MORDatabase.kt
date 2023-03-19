@@ -1,21 +1,20 @@
 package com.olt.mor.common.database
 
-import com.badoo.reaktive.completable.Completable
-import com.badoo.reaktive.maybe.Maybe
-import com.badoo.reaktive.observable.Observable
 import com.olt.mor.common.database.data.*
+import kotlinx.coroutines.flow.Flow
+import kotlin.coroutines.CoroutineContext
 
 interface MORDatabase {
 
-    fun addRecipe(recipe: Recipe): Completable
+    suspend fun addRecipe(recipe: Recipe)
 
-    fun deleteRecipe(id: Long): Completable
+    suspend fun deleteRecipe(id: Long)
 
-    fun updateRecipe(recipe: Recipe): Completable
+    suspend fun updateRecipe(recipe: Recipe)
 
-    fun selectRecipe(id: Long): Maybe<Recipe>
+    suspend fun selectRecipe(id: Long): Recipe?
 
-    fun searchRecipe(
+    suspend fun searchRecipe(
         name: String = "",
         author: String = "",
         rating: Int = 0,
@@ -23,9 +22,9 @@ interface MORDatabase {
         difficulty: Difficulty = Difficulty.NotDefined,
         tags: List<RecipeTag.ExistingTag> = emptyList(),
         ingredients: List<RecipeIngredient.ExistingIngredient> = emptyList()
-    ): Maybe<List<PreviewRecipe>>
+    ): List<PreviewRecipe>
 
-    fun observeTags(): Observable<List<RawTag>>
+    fun tags(context: CoroutineContext): Flow<List<RawTag>>
 
-    fun observeIngredients(): Observable<List<RawIngredient>>
+    fun ingredients(context: CoroutineContext): Flow<List<RawIngredient>>
 }

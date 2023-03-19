@@ -1,18 +1,16 @@
 package com.olt.mor.common.database
 
-import com.badoo.reaktive.completable.Completable
-import com.badoo.reaktive.maybe.Maybe
-import com.badoo.reaktive.observable.*
-import com.badoo.reaktive.single.*
 import com.olt.mor.common.database.data.*
 import com.olt.mor.database.MyOwnRecipes
 import com.squareup.sqldelight.db.SqlDriver
+import com.squareup.sqldelight.runtime.coroutines.asFlow
+import com.squareup.sqldelight.runtime.coroutines.mapToList
+import kotlinx.coroutines.flow.Flow
+import kotlin.coroutines.CoroutineContext
 
 class DefaultMORDatabase(
-    database: MyOwnRecipes
-) : SqlDatabase<MyOwnRecipes>(
-    database = database
-), MORDatabase {
+    private val database: MyOwnRecipes
+) : MORDatabase {
 
     constructor(driver: SqlDriver) : this(
         database = MyOwnRecipes(
@@ -22,101 +20,91 @@ class DefaultMORDatabase(
         )
     )
 
-    private val recipeQueries: Single<RecipeQueries> =
-        databaseQuery { it.recipeQueries }
+    private val recipeQueries: RecipeQueries
+        get() = database.recipeQueries
 
-    override fun addRecipe(recipe: Recipe): Completable =
-        execute(query = recipeQueries) {
-            it.transaction {
-                it.addRecipe(
-                    name = recipe.name,
-                    author = recipe.author,
-                    rating = recipe.rating,
-                    workTimeInMinutes = recipe.workTimeInMinutes,
-                    cookTimeInMinutes = recipe.cookTimeInMinutes,
-                    difficulty = recipe.difficulty,
-                    portions = recipe.portions,
-                    text = recipe.text
-                )
+    override suspend fun addRecipe(recipe: Recipe): Unit =
+        recipeQueries.transaction {
+            recipeQueries.addRecipe(
+                name = recipe.name,
+                author = recipe.author,
+                rating = recipe.rating,
+                workTimeInMinutes = recipe.workTimeInMinutes,
+                cookTimeInMinutes = recipe.cookTimeInMinutes,
+                difficulty = recipe.difficulty,
+                portions = recipe.portions,
+                text = recipe.text
+            )
 
-                val recipeId = it.getLastInsertId().executeAsOne()
+            val recipeId = recipeQueries.getLastInsertId().executeAsOne()
 
-                it.addTagsAndIngredients(recipeId = recipeId, tags = recipe.tags, ingredients = recipe.ingredients)
-            }
+            recipeQueries.addTagsAndIngredients(recipeId = recipeId, tags = recipe.tags, ingredients = recipe.ingredients)
         }
 
-    override fun deleteRecipe(id: Long): Completable =
-        execute(query = recipeQueries) {
-            it.transaction {
-                it.deleteRecipe(id = id)
-                it.removeUnusedTags()
-                it.removeUnusedIngredients()
-            }
+    override suspend fun deleteRecipe(id: Long): Unit =
+        recipeQueries.transaction {
+            recipeQueries.deleteRecipe(id = id)
+            recipeQueries.removeUnusedTags()
+            recipeQueries.removeUnusedIngredients()
         }
 
-    override fun selectRecipe(id: Long): Maybe<Recipe> =
-        queryMaybe(query = recipeQueries) {
-            it.transactionWithResult {
-                val tags = it
-                    .selectTags(id = id)
-                    .executeAsList()
-                    .map { tag -> RecipeTag.ExistingTag(id = tag.id, name = tag.name) }
-                val ingredients = it
-                    .selectIngredients(id = id)
-                    .executeAsList()
-                    .map { ingredient ->
-                        RecipeIngredient.ExistingIngredient(
-                            name = ingredient.name,
-                            amount = ingredient.amount,
-                            unit = ingredient.unit,
-                            id = ingredient.id
-                        )
-                    }
-                val recipe = it.selectRecipe(id = id).executeAsOneOrNull()
+    override suspend fun selectRecipe(id: Long): Recipe? =
+        recipeQueries.transactionWithResult {
+            val tags = recipeQueries.selectTags(id = id)
+                .executeAsList()
+                .map { tag -> RecipeTag.ExistingTag(id = tag.id, name = tag.name) }
+            val ingredients = recipeQueries.selectIngredients(id = id)
+                .executeAsList()
+                .map { ingredient ->
+                    RecipeIngredient.ExistingIngredient(
+                        name = ingredient.name,
+                        amount = ingredient.amount,
+                        unit = ingredient.unit,
+                        id = ingredient.id
+                    )
+                }
+            val recipe = recipeQueries.selectRecipe(id = id).executeAsOneOrNull()
 
-                if (recipe == null) null
-                else Recipe(
-                    id = recipe.id,
-                    name = recipe.name,
-                    author = recipe.author,
-                    rating = recipe.rating,
-                    workTimeInMinutes = recipe.workTimeInMinutes,
-                    cookTimeInMinutes = recipe.cookTimeInMinutes,
-                    difficulty = recipe.difficulty,
-                    portions = recipe.portions,
-                    text = recipe.text,
-                    tags = tags,
-                    ingredients = ingredients
-                )
-            }
+            if (recipe == null) null
+            else Recipe(
+                id = recipe.id,
+                name = recipe.name,
+                author = recipe.author,
+                rating = recipe.rating,
+                workTimeInMinutes = recipe.workTimeInMinutes,
+                cookTimeInMinutes = recipe.cookTimeInMinutes,
+                difficulty = recipe.difficulty,
+                portions = recipe.portions,
+                text = recipe.text,
+                tags = tags,
+                ingredients = ingredients
+            )
         }
 
-    override fun updateRecipe(recipe: Recipe): Completable =
-        execute(query = recipeQueries) {
-            it.transaction {
-                it.updateRecipe(
-                    id = recipe.id,
-                    name = recipe.name,
-                    author = recipe.author,
-                    rating = recipe.rating,
-                    workTimeInMinutes = recipe.workTimeInMinutes,
-                    cookTimeInMinutes = recipe.cookTimeInMinutes,
-                    difficulty = recipe.difficulty,
-                    portions = recipe.portions,
-                    text = recipe.text
-                )
+    override suspend fun updateRecipe(recipe: Recipe): Unit =
+        recipeQueries.transaction {
+            recipeQueries.updateRecipe(
+                id = recipe.id,
+                name = recipe.name,
+                author = recipe.author,
+                rating = recipe.rating,
+                workTimeInMinutes = recipe.workTimeInMinutes,
+                cookTimeInMinutes = recipe.cookTimeInMinutes,
+                difficulty = recipe.difficulty,
+                portions = recipe.portions,
+                text = recipe.text
+            )
 
-                it.deleteTagLink(id = recipe.id)
-                it.deleteIngredientLink(id = recipe.id)
+            recipeQueries.deleteTagLink(id = recipe.id)
+            recipeQueries.deleteIngredientLink(id = recipe.id)
 
-                it.addTagsAndIngredients(recipeId = recipe.id, tags = recipe.tags, ingredients = recipe.ingredients)
+            recipeQueries.addTagsAndIngredients(recipeId = recipe.id, tags = recipe.tags, ingredients = recipe.ingredients)
 
-                it.removeUnusedTags()
-                it.removeUnusedIngredients()
-            }
+            recipeQueries.removeUnusedTags()
+            recipeQueries.removeUnusedIngredients()
         }
 
-    override fun searchRecipe(
+    override suspend fun searchRecipe(
         name: String,
         author: String,
         rating: Int,
@@ -124,49 +112,46 @@ class DefaultMORDatabase(
         difficulty: Difficulty,
         tags: List<RecipeTag.ExistingTag>,
         ingredients: List<RecipeIngredient.ExistingIngredient>
-    ): Maybe<List<PreviewRecipe>> =
-        queryMaybe(query = recipeQueries) {
-            it.transactionWithResult {
-                val tagsMap = it.selectAllTags().executeAsList().associate { tag -> tag.id to tag.name }
+    ): List<PreviewRecipe> =
+        recipeQueries.transactionWithResult {
+            val tagsMap = recipeQueries.selectAllTags().executeAsList().associate { tag -> tag.id to tag.name }
 
-                it
-                    .searchRecipe(
-                        tags = tags.map { tag -> tag.id },
-                        ingredients = ingredients.map { ingredient -> ingredient.id },
-                        name = name,
-                        author = author,
-                        rating = rating,
-                        time = maxTime.toLong(),
-                        difficulty = difficulty,
-                        filterTags = if (tags.isEmpty()) 0L else 1L,
-                        filterIngredients = if (ingredients.isEmpty()) 0L else 1L
+            recipeQueries.searchRecipe(
+                    tags = tags.map { tag -> tag.id },
+                    ingredients = ingredients.map { ingredient -> ingredient.id },
+                    name = name,
+                    author = author,
+                    rating = rating,
+                    time = maxTime.toLong(),
+                    difficulty = difficulty,
+                    filterTags = if (tags.isEmpty()) 0L else 1L,
+                    filterIngredients = if (ingredients.isEmpty()) 0L else 1L
+                )
+                .executeAsList()
+                .map { recipe ->
+                    PreviewRecipe(
+                        id = recipe.id,
+                        name = recipe.name,
+                        author = recipe.author,
+                        rating = recipe.rating,
+                        difficulty = recipe.difficulty,
+                        time = recipe.time.toInt(),
+                        tags = recipe.tags?.split(",")?.map { id -> RecipeTag.ExistingTag(id = id.toLong(), name = tagsMap[id.toLong()] ?: "") } ?: emptyList(),
                     )
-                    .executeAsList()
-                    .map { recipe ->
-                        PreviewRecipe(
-                            id = recipe.id,
-                            name = recipe.name,
-                            author = recipe.author,
-                            rating = recipe.rating,
-                            difficulty = recipe.difficulty,
-                            time = recipe.time.toInt(),
-                            tags = recipe.tags?.split(",")?.map { id -> RecipeTag.ExistingTag(id = id.toLong(), name = tagsMap[id.toLong()] ?: "") } ?: emptyList(),
-                        )
-                    }
-            }
+                }
         }
 
-    private val ingredientQueries: Single<IngredientQueries> =
-        databaseQuery { it.ingredientQueries }
+    override fun ingredients(context: CoroutineContext): Flow<List<RawIngredient>> =
+        database.ingredientQueries
+            .selectAll()
+            .asFlow()
+            .mapToList(context = context)
 
-    override fun observeIngredients(): Observable<List<RawIngredient>> =
-        queryObservable(query = ingredientQueries) { it.selectAll() }
-
-    private val tagQueries: Single<TagQueries> =
-        databaseQuery { it.tagQueries }
-
-    override fun observeTags(): Observable<List<RawTag>> =
-        queryObservable(query = tagQueries) { it.selectAll() }
+    override fun tags(context: CoroutineContext): Flow<List<RawTag>> =
+        database.tagQueries
+            .selectAll()
+            .asFlow()
+            .mapToList(context = context)
 
     private fun RecipeQueries.addTagsAndIngredients(recipeId: Long, tags: List<RecipeTag>, ingredients: List<RecipeIngredient>) {
         tags.forEach { tag ->

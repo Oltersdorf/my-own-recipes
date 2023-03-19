@@ -13,12 +13,12 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(Deps.Badoo.Reaktive.reaktive)
+                implementation(Deps.Squareup.SQLDelight.coroutineExtensions)
             }
         }
         named("desktopTest") {
             dependencies {
-                implementation(Deps.Badoo.Reaktive.reaktiveTesting)
+                implementation(Deps.JetBrains.Kotlin.testCoroutines)
                 implementation(Deps.Squareup.SQLDelight.sqliteDriver)
             }
         }
