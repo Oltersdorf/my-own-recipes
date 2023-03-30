@@ -107,7 +107,7 @@ FROM (
     AND author LIKE :author
     AND rating >= :rating
     AND (workTimeInMinutes + cookTimeInMinutes) <= :time
-    AND difficulty = :difficulty
+    AND difficulty <= :difficulty
 ) AS FilterResult
 LEFT JOIN RecipeToTag
 ON recipeId = FilterResult.id
