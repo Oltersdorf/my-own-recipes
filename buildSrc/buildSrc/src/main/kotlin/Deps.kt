@@ -1,13 +1,14 @@
 object Deps {
     object JetBrains {
         object Kotlin {
-            private const val VERSION = "1.8.0"
+            private const val VERSION = "1.8.10"
             const val gradlePlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:$VERSION"
             const val testCommon = "org.jetbrains.kotlin:kotlin-test-common:$VERSION"
             const val testJunit = "org.jetbrains.kotlin:kotlin-test-junit5:$VERSION"
             const val testCommonAnnotation = "org.jetbrains.kotlin:kotlin-test-annotations-common:$VERSION"
             private const val XVERSION = "1.6.4"
             const val testCoroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-test:$XVERSION"
+            const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$XVERSION"
         }
 
         object Compose {

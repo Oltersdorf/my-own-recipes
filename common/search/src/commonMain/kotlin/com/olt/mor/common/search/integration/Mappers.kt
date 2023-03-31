@@ -6,6 +6,9 @@ import com.olt.mor.common.search.store.MORSearchStore.State
 internal val stateToModel: (State) -> Model =
     {
         Model(
-            searchTerm = it.searchTerm
+            searchTerm = it.searchTerm,
+            filterRecommendations = it.filterRecommendations,
+            filters = it.filters,
+            recipes = it.recipes
         )
     }

@@ -7,6 +7,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":common:database"))
+                implementation(Deps.JetBrains.Kotlin.coroutines)
                 implementation(Deps.ArkIvanov.MVIKotlin.mvikotlin)
                 implementation(Deps.ArkIvanov.MVIKotlin.rx)
                 implementation(Deps.ArkIvanov.MVIKotlin.mvikotlinExtensionsCoroutines)
@@ -16,6 +17,12 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(Deps.ArkIvanov.MVIKotlin.mvikotlinMain)
+            }
+        }
+        named("desktopTest") {
+            dependencies {
+                implementation(Deps.JetBrains.Kotlin.testCoroutines)
+                implementation(Deps.Squareup.SQLDelight.sqliteDriver)
             }
         }
     }

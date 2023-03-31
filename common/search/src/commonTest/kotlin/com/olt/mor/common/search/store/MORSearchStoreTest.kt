@@ -1,19 +1,173 @@
 package com.olt.mor.common.search.store
 
+import com.arkivanov.mvikotlin.extensions.coroutines.states
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
+import com.olt.mor.common.database.RawIngredient
+import com.olt.mor.common.database.RawTag
+import com.olt.mor.common.database.data.*
+import com.olt.mor.common.search.Filter
 import com.olt.mor.common.search.store.MORSearchStore.Intent
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.*
+import kotlin.test.*
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class MORSearchStoreTest {
-    private val provider = MORSearchStoreProvider(storeFactory = DefaultStoreFactory())
+    private class TestDatabase : MORSearchStoreProvider.Database {
+
+        val recipesEmitter = MutableStateFlow<List<PreviewRecipe>>(emptyList())
+
+        override val recipes: Flow<List<PreviewRecipe>>
+            get() = recipesEmitter.asStateFlow()
+
+        val tagsEmitter = MutableStateFlow<List<RawTag>>(emptyList())
+
+        override val tags: Flow<List<RawTag>>
+            get() = tagsEmitter.asStateFlow()
+
+        val ingredientsEmitter = MutableStateFlow<List<RawIngredient>>(emptyList())
+
+        override val ingredients: Flow<List<RawIngredient>>
+            get() = ingredientsEmitter.asStateFlow()
+
+        override suspend fun searchRecipes(
+            name: String,
+            author: String,
+            rating: Int,
+            maxTime: Int,
+            difficulty: Difficulty,
+            tags: List<RecipeTag.ExistingTag>,
+            ingredients: List<RecipeIngredient.ExistingIngredient>
+        ) {
+
+        }
+    }
+
+    private lateinit var testDatabase: TestDatabase
+    private lateinit var storeProvider: MORSearchStoreProvider
+    private val testDispatcher: TestDispatcher = UnconfinedTestDispatcher()
+
+    @BeforeTest
+    fun before() {
+        Dispatchers.setMain(testDispatcher)
+        testDatabase = TestDatabase()
+        storeProvider = MORSearchStoreProvider(storeFactory = DefaultStoreFactory(), database = testDatabase)
+    }
+
+    @AfterTest
+    fun after() {
+        Dispatchers.resetMain()
+    }
 
     @Test
-    fun `WHEN Intent ChangeSearchTerm THEN searchTerm changed in state`() {
-        val store = provider.provide()
+    fun `WHEN tags in database change THEN state is changed`() = runTest {
+        val expected = listOf(RawTag(id = 1L, name = "tag1"))
+        testDatabase.tagsEmitter.emit(expected)
 
+        val store = storeProvider.provide()
+        val actual = mutableListOf<MORSearchStore.State>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            store.states.toList(actual)
+        }
+
+        assertEquals(listOf(expected), actual.map { it.tags })
+    }
+
+    @Test
+    fun `WHEN ingredients in database change THEN state is changed`() = runTest {
+        val expected = listOf(RawIngredient(id = 1L, name = "ingredient1"))
+        testDatabase.ingredientsEmitter.emit(expected)
+
+        val store = storeProvider.provide()
+        val actual = mutableListOf<MORSearchStore.State>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            store.states.toList(actual)
+        }
+
+        assertEquals(listOf(expected), actual.map { it.ingredients })
+    }
+
+    @Test
+    fun `WHEN recipes in database change THEN state is changed`() = runTest {
+        val expected = listOf(PreviewRecipe(id = 1L, name = "recipe1", author = "a", rating = 1, difficulty = Difficulty.NotDefined, time = 0, tags = emptyList()))
+        testDatabase.recipesEmitter.emit(expected)
+
+        val store = storeProvider.provide()
+        val actual = mutableListOf<MORSearchStore.State>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            store.states.toList(actual)
+        }
+
+        assertEquals(listOf(expected), actual.map { it.recipes })
+    }
+
+    @Test
+    fun `WHEN Intent ChangeSearchTerm THEN searchTerm changed in state`() = runTest {
+        val store = storeProvider.provide()
         store.accept(Intent.ChangeSearchTerm("new text"))
 
         assertEquals("new text", store.state.searchTerm)
+    }
+
+    @Test
+    fun `WHEN Intent ChangeSearchTerm THEN correct text recommendations are shown`() = runTest {
+        val searchTerm = "search"
+
+        testDatabase.tagsEmitter.emit(listOf(RawTag(id = 1L, name = "$searchTerm tag"), RawTag(id = 2L, "different")))
+        testDatabase.ingredientsEmitter.emit(listOf(RawIngredient(id = 2L, name = "ingredient $searchTerm"), RawIngredient(id = 1L, name = "diff")))
+
+        val store = storeProvider.provide()
+        store.accept(Intent.ChangeSearchTerm(searchTerm))
+
+        val expected = listOf(
+            Filter.Name(searchTerm),
+            Filter.Author(searchTerm),
+            Filter.Tag(RecipeTag.ExistingTag(id = 1L, name = "$searchTerm tag")),
+            Filter.Ingredient(RecipeIngredient.ExistingIngredient(id = 2L, name = "ingredient $searchTerm", amount = 0.0, unit = IngredientUnit.None))
+        )
+        assertContentEquals(expected, store.state.filterRecommendations)
+    }
+
+    @Test
+    fun `WHEN Intent ChangeSearchTerm THEN correct number recommendations are shown`() = runTest {
+        val searchTerm = 1
+
+        testDatabase.tagsEmitter.emit(listOf(RawTag(id = 1L, name = "$searchTerm tag"), RawTag(id = 2L, "different")))
+        testDatabase.ingredientsEmitter.emit(listOf(RawIngredient(id = 2L, name = "ingredient $searchTerm"), RawIngredient(id = 1L, name = "diff")))
+
+        val store = storeProvider.provide()
+        store.accept(Intent.ChangeSearchTerm(searchTerm.toString()))
+
+        val expected = listOf(
+            Filter.Rating(searchTerm),
+            Filter.MaxTime(searchTerm),
+            Filter.Difficulty(Difficulty.Easy),
+            Filter.Name(searchTerm.toString()),
+            Filter.Author(searchTerm.toString()),
+            Filter.Tag(RecipeTag.ExistingTag(id = 1L, name = "$searchTerm tag")),
+            Filter.Ingredient(RecipeIngredient.ExistingIngredient(id = 2L, name = "ingredient $searchTerm", amount = 0.0, unit = IngredientUnit.None)),
+        )
+        assertContentEquals(expected, store.state.filterRecommendations)
+    }
+
+    @Test
+    fun `WHEN Intent AddFilter THEN filter is added in state`() {
+        val store = storeProvider.provide()
+        store.accept(Intent.ChangeSearchTerm("test"))
+        store.accept(Intent.AddFilter(Filter.Name("test")))
+
+        assertEquals(MORSearchStore.State(filters = listOf(Filter.Name("test"))), store.state)
+    }
+
+    @Test
+    fun `WHEN Intent RemoveFilter THEN filter is removed in state`() {
+        val store = storeProvider.provide()
+        store.accept(Intent.AddFilter(Filter.Name("test")))
+        store.accept(Intent.RemoveFilter(Filter.Name("test")))
+
+        assertEquals(emptyList(), store.state.filters)
     }
 }
