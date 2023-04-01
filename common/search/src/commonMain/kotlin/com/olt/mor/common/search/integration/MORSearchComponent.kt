@@ -11,6 +11,7 @@ import com.olt.mor.common.search.MORSearch
 import com.olt.mor.common.search.MORSearch.Model
 import com.olt.mor.common.search.store.MORSearchStore.Intent
 import com.olt.mor.common.search.store.MORSearchStoreProvider
+import com.olt.mor.common.utils.store.asValue
 
 class MORSearchComponent(
     componentContext: ComponentContext,

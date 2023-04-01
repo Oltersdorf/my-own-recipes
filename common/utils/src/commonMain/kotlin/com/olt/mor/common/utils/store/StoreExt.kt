@@ -1,10 +1,10 @@
-package com.olt.mor.common.search.integration
+package com.olt.mor.common.utils.store
 
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.rx.Disposable
 
-internal fun <T : Any> Store<*, T, *>.asValue(): Value<T> =
+fun <T : Any> Store<*, T, *>.asValue(): Value<T> =
     object : Value<T>() {
         override val value: T get() = state
         private var disposables = emptyMap<(T) -> Unit, Disposable>()

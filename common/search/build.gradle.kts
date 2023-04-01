@@ -7,9 +7,9 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":common:database"))
+                implementation(project(":common:utils"))
                 implementation(Deps.JetBrains.Kotlin.coroutines)
                 implementation(Deps.ArkIvanov.MVIKotlin.mvikotlin)
-                implementation(Deps.ArkIvanov.MVIKotlin.rx)
                 implementation(Deps.ArkIvanov.MVIKotlin.mvikotlinExtensionsCoroutines)
                 implementation(Deps.ArkIvanov.Decompose.decompose)
             }
