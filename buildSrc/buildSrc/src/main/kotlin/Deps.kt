@@ -6,7 +6,7 @@ object Deps {
             const val testCommon = "org.jetbrains.kotlin:kotlin-test-common:$VERSION"
             const val testJunit = "org.jetbrains.kotlin:kotlin-test-junit5:$VERSION"
             const val testCommonAnnotation = "org.jetbrains.kotlin:kotlin-test-annotations-common:$VERSION"
-            private const val XVERSION = "1.6.4"
+            private const val XVERSION = "1.7.0-Beta"
             const val testCoroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-test:$XVERSION"
             const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$XVERSION"
         }
