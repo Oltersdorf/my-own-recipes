@@ -19,14 +19,11 @@ class MORSearchStoreDatabase(
 
     private val recipesFlow = MutableStateFlow<List<PreviewRecipe>>(emptyList())
 
-    override val recipes: Flow<List<PreviewRecipe>>
-        get() = recipesFlow.asStateFlow()
+    override val recipes: Flow<List<PreviewRecipe>> = recipesFlow.asStateFlow()
 
-    override val tags: Flow<List<RawTag>>
-        get() = database.tags(Dispatchers.IO)
+    override val tags: Flow<List<RawTag>> = database.tags(Dispatchers.IO)
 
-    override val ingredients: Flow<List<RawIngredient>>
-        get() = database.ingredients(Dispatchers.IO)
+    override val ingredients: Flow<List<RawIngredient>> = database.ingredients(Dispatchers.IO)
 
     override suspend fun searchRecipes(
         name: String,
