@@ -4,16 +4,14 @@ import com.arkivanov.mvikotlin.core.store.Reducer
 import com.arkivanov.mvikotlin.core.store.SimpleBootstrapper
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
-import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import com.olt.mor.common.database.RawIngredient
 import com.olt.mor.common.database.RawTag
 import com.olt.mor.common.database.data.*
 import com.olt.mor.common.search.Filter
 import com.olt.mor.common.search.store.MORSearchStore.Intent
 import com.olt.mor.common.search.store.MORSearchStore.State
-import kotlinx.coroutines.*
+import com.olt.mor.common.utils.store.CoroutineExecutor
 import kotlinx.coroutines.flow.*
-import kotlin.coroutines.CoroutineContext
 
 internal class MORSearchStoreProvider(
     private val storeFactory: StoreFactory,
@@ -38,17 +36,11 @@ internal class MORSearchStoreProvider(
         data class FilterRemoved(val filter: Filter) : Message()
     }
 
-    private inner class ExecutorImpl : CoroutineExecutor<Intent, Unit, State, Message, Nothing>() {
+    private inner class ExecutorImpl : CoroutineExecutor<Intent, State, Message>() {
         override fun executeAction(action: Unit, getState: () -> State) {
-            scope.launch {
-                database.recipes.collectLatest { dispatch(Message.RecipesLoaded(it)) }
-            }
-            scope.launch {
-                database.tags.collectLatest { dispatch(Message.TagsLoaded(it)) }
-            }
-            scope.launch {
-                database.ingredients.collectLatest { dispatch(Message.IngredientsLoaded(it)) }
-            }
+            listenToFlow(flow = database.recipes, mapper = Message::RecipesLoaded)
+            listenToFlow(flow = database.tags, mapper = Message::TagsLoaded)
+            listenToFlow(flow = database.ingredients, mapper = Message::IngredientsLoaded)
         }
 
         override fun executeIntent(intent: Intent, getState: () -> State): Unit =
@@ -60,7 +52,7 @@ internal class MORSearchStoreProvider(
 
         private fun addFilter(newFilter: Filter, existingFilters: List<Filter>) {
             dispatch(Message.FilterAdded(filter = newFilter))
-            scope.launch(Dispatchers.IO) {
+            ioTask {
                 val allFilter = existingFilters.toMutableList()
                 allFilter.add(newFilter)
 
@@ -70,7 +62,7 @@ internal class MORSearchStoreProvider(
 
         private fun removeFilter(oldFilter: Filter, existingFilters: List<Filter>) {
             dispatch(Message.FilterRemoved(filter = oldFilter))
-            scope.launch(Dispatchers.IO) {
+            ioTask {
                 val allFilter = existingFilters.toMutableList()
                 allFilter.remove(oldFilter)
 
