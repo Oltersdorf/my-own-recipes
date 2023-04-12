@@ -1,11 +1,13 @@
 package com.olt.mor.common.database
 
-import com.olt.mor.common.database.data.*
+import com.olt.mor.common.api.data.*
+import com.olt.mor.common.api.database.MORDatabase
 import com.olt.mor.database.MyOwnRecipes
 import com.squareup.sqldelight.db.SqlDriver
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToList
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlin.coroutines.CoroutineContext
 
 class DefaultMORDatabase(
@@ -15,8 +17,8 @@ class DefaultMORDatabase(
     constructor(driver: SqlDriver) : this(
         database = MyOwnRecipes(
             driver = driver,
-            RawRecipeAdapter = RawRecipe.Adapter(difficultyAdapter = Difficulty.Adapter()),
-            RecipeToIngredientAdapter = RecipeToIngredient.Adapter(unitAdapter = IngredientUnit.Adapter())
+            RawRecipeAdapter = RawRecipe.Adapter(difficultyAdapter = DifficultyAdapter()),
+            RecipeToIngredientAdapter = RecipeToIngredient.Adapter(unitAdapter = IngredientUnitAdapter())
         )
     )
 
@@ -52,11 +54,11 @@ class DefaultMORDatabase(
         recipeQueries.transactionWithResult {
             val tags = recipeQueries.selectTags(id = id)
                 .executeAsList()
-                .map { tag -> RecipeTag.ExistingTag(id = tag.id, name = tag.name) }
+                .map { tag -> Tag.Existing(id = tag.id, name = tag.name) }
             val ingredients = recipeQueries.selectIngredients(id = id)
                 .executeAsList()
                 .map { ingredient ->
-                    RecipeIngredient.ExistingIngredient(
+                    Ingredient.Existing(
                         name = ingredient.name,
                         amount = ingredient.amount,
                         unit = ingredient.unit,
@@ -110,9 +112,9 @@ class DefaultMORDatabase(
         rating: Int,
         maxTime: Int,
         difficulty: Difficulty,
-        tags: List<RecipeTag.ExistingTag>,
-        ingredients: List<RecipeIngredient.ExistingIngredient>
-    ): List<PreviewRecipe> =
+        tags: List<Tag.Existing>,
+        ingredients: List<Ingredient.Existing>
+    ): List<RecipePreview> =
         recipeQueries.transactionWithResult {
             val tagsMap = recipeQueries.selectAllTags().executeAsList().associate { tag -> tag.id to tag.name }
 
@@ -129,35 +131,53 @@ class DefaultMORDatabase(
                 )
                 .executeAsList()
                 .map { recipe ->
-                    PreviewRecipe(
+                    RecipePreview(
                         id = recipe.id,
                         name = recipe.name,
                         author = recipe.author,
                         rating = recipe.rating,
                         difficulty = recipe.difficulty,
                         time = recipe.time.toInt(),
-                        tags = recipe.tags?.split(",")?.map { id -> RecipeTag.ExistingTag(id = id.toLong(), name = tagsMap[id.toLong()] ?: "") } ?: emptyList(),
+                        tags = recipe.tags?.split(",")?.map { id -> Tag.Existing(id = id.toLong(), name = tagsMap[id.toLong()] ?: "") } ?: emptyList(),
                     )
                 }
         }
 
-    override fun ingredients(context: CoroutineContext): Flow<List<RawIngredient>> =
+    override fun ingredients(context: CoroutineContext): Flow<List<Ingredient.Existing>> =
         database.ingredientQueries
             .selectAll()
             .asFlow()
             .mapToList(context = context)
+            .map { ingredientsList ->
+                ingredientsList.map {
+                    Ingredient.Existing(
+                        id = it.id,
+                        name = it.name,
+                        amount = 0.0,
+                        unit = IngredientUnit.None
+                    )
+                }
+            }
 
-    override fun tags(context: CoroutineContext): Flow<List<RawTag>> =
+    override fun tags(context: CoroutineContext): Flow<List<Tag.Existing>> =
         database.tagQueries
             .selectAll()
             .asFlow()
             .mapToList(context = context)
+            .map { tagsList ->
+                tagsList.map {
+                    Tag.Existing(
+                        id = it.id,
+                        name = it.name
+                    )
+                }
+            }
 
-    private fun RecipeQueries.addTagsAndIngredients(recipeId: Long, tags: List<RecipeTag>, ingredients: List<RecipeIngredient>) {
+    private fun RecipeQueries.addTagsAndIngredients(recipeId: Long, tags: List<Tag>, ingredients: List<Ingredient>) {
         tags.forEach { tag ->
             when (tag) {
-                is RecipeTag.ExistingTag -> addTagLink(recipeId = recipeId, tagId = tag.id)
-                is RecipeTag.NewTag -> {
+                is Tag.Existing -> addTagLink(recipeId = recipeId, tagId = tag.id)
+                is Tag.New -> {
                     addTag(name = tag.name)
                     addTagLink(recipeId = recipeId, tagId = getLastInsertId().executeAsOne())
                 }
@@ -166,13 +186,13 @@ class DefaultMORDatabase(
 
         ingredients.forEach { ingredient ->
             when (ingredient) {
-                is RecipeIngredient.ExistingIngredient -> addIngredientLink(
+                is Ingredient.Existing -> addIngredientLink(
                     recipeId = recipeId,
                     ingredientId = ingredient.id,
                     amount = ingredient.amount,
                     unit = ingredient.unit
                 )
-                is RecipeIngredient.NewIngredient -> {
+                is Ingredient.New -> {
                     addIngredient(name = ingredient.name)
                     addIngredientLink(
                         recipeId = recipeId,

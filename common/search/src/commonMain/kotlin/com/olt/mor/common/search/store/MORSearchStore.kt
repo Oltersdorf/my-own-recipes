@@ -1,9 +1,9 @@
 package com.olt.mor.common.search.store
 
 import com.arkivanov.mvikotlin.core.store.Store
-import com.olt.mor.common.database.RawIngredient
-import com.olt.mor.common.database.RawTag
-import com.olt.mor.common.database.data.PreviewRecipe
+import com.olt.mor.common.api.data.Ingredient
+import com.olt.mor.common.api.data.RecipePreview
+import com.olt.mor.common.api.data.Tag
 import com.olt.mor.common.search.Filter
 import com.olt.mor.common.search.store.MORSearchStore.Intent
 import com.olt.mor.common.search.store.MORSearchStore.State
@@ -17,11 +17,11 @@ internal interface MORSearchStore : Store<Intent, State, Nothing> {
     }
 
     data class State(
-        val tags: List<RawTag> = emptyList(),
-        val ingredients: List<RawIngredient> = emptyList(),
+        val tags: List<Tag.Existing> = emptyList(),
+        val ingredients: List<Ingredient.Existing> = emptyList(),
         val searchTerm: String = "",
         val filterRecommendations: List<Filter> = emptyList(),
         val filters: List<Filter> = emptyList(),
-        val recipes: List<PreviewRecipe> = emptyList()
+        val recipes: List<RecipePreview> = emptyList()
     )
 }

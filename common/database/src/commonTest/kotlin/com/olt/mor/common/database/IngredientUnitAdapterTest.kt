@@ -1,13 +1,14 @@
-package com.olt.mor.common.database.data
+package com.olt.mor.common.database
 
+import com.olt.mor.common.api.data.IngredientUnit
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-class IngredientUnitTest {
-    private val adapter = IngredientUnit.Adapter()
+class IngredientUnitAdapterTest {
+    private val adapter = IngredientUnitAdapter()
 
     private val encodeData = listOf(
         IngredientUnit.Volume to "v",

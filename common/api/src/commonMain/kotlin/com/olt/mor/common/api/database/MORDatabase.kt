@@ -1,11 +1,10 @@
-package com.olt.mor.common.database
+package com.olt.mor.common.api.database
 
-import com.olt.mor.common.database.data.*
+import com.olt.mor.common.api.data.*
 import kotlinx.coroutines.flow.Flow
 import kotlin.coroutines.CoroutineContext
 
 interface MORDatabase {
-
     suspend fun addRecipe(recipe: Recipe)
 
     suspend fun deleteRecipe(id: Long)
@@ -20,11 +19,11 @@ interface MORDatabase {
         rating: Int = 0,
         maxTime: Int = Int.MAX_VALUE,
         difficulty: Difficulty = Difficulty.NotDefined,
-        tags: List<RecipeTag.ExistingTag> = emptyList(),
-        ingredients: List<RecipeIngredient.ExistingIngredient> = emptyList()
-    ): List<PreviewRecipe>
+        tags: List<Tag.Existing> = emptyList(),
+        ingredients: List<Ingredient.Existing> = emptyList()
+    ): List<RecipePreview>
 
-    fun tags(context: CoroutineContext): Flow<List<RawTag>>
+    fun tags(context: CoroutineContext): Flow<List<Tag.Existing>>
 
-    fun ingredients(context: CoroutineContext): Flow<List<RawIngredient>>
+    fun ingredients(context: CoroutineContext): Flow<List<Ingredient.Existing>>
 }

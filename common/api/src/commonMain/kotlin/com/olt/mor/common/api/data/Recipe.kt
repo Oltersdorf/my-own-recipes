@@ -1,4 +1,4 @@
-package com.olt.mor.common.database.data
+package com.olt.mor.common.api.data
 
 data class Recipe(
     val id: Long,
@@ -10,6 +10,6 @@ data class Recipe(
     val difficulty: Difficulty,
     val portions: Int,
     val text: String,
-    val tags: List<RecipeTag>,
-    val ingredients: List<RecipeIngredient>
+    val tags: List<Tag>,
+    val ingredients: List<Ingredient>
 )

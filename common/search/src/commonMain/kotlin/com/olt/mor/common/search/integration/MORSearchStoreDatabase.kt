@@ -1,12 +1,10 @@
 package com.olt.mor.common.search.integration
 
-import com.olt.mor.common.database.MORDatabase
-import com.olt.mor.common.database.RawIngredient
-import com.olt.mor.common.database.RawTag
-import com.olt.mor.common.database.data.Difficulty
-import com.olt.mor.common.database.data.PreviewRecipe
-import com.olt.mor.common.database.data.RecipeIngredient
-import com.olt.mor.common.database.data.RecipeTag
+import com.olt.mor.common.api.data.Difficulty
+import com.olt.mor.common.api.data.Ingredient
+import com.olt.mor.common.api.data.RecipePreview
+import com.olt.mor.common.api.data.Tag
+import com.olt.mor.common.api.database.MORDatabase
 import com.olt.mor.common.search.store.MORSearchStoreProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -17,13 +15,13 @@ class MORSearchStoreDatabase(
     private val database: MORDatabase
 ) : MORSearchStoreProvider.Database {
 
-    private val recipesFlow = MutableStateFlow<List<PreviewRecipe>>(emptyList())
+    private val recipesFlow = MutableStateFlow<List<RecipePreview>>(emptyList())
 
-    override val recipes: Flow<List<PreviewRecipe>> = recipesFlow.asStateFlow()
+    override val recipes: Flow<List<RecipePreview>> = recipesFlow.asStateFlow()
 
-    override val tags: Flow<List<RawTag>> = database.tags(Dispatchers.IO)
+    override val tags: Flow<List<Tag.Existing>> = database.tags(Dispatchers.IO)
 
-    override val ingredients: Flow<List<RawIngredient>> = database.ingredients(Dispatchers.IO)
+    override val ingredients: Flow<List<Ingredient.Existing>> = database.ingredients(Dispatchers.IO)
 
     override suspend fun searchRecipes(
         name: String,
@@ -31,8 +29,8 @@ class MORSearchStoreDatabase(
         rating: Int,
         maxTime: Int,
         difficulty: Difficulty,
-        tags: List<RecipeTag.ExistingTag>,
-        ingredients: List<RecipeIngredient.ExistingIngredient>
+        tags: List<Tag.Existing>,
+        ingredients: List<Ingredient.Existing>
     ) {
         val previews = database.searchRecipe(
             name = name,

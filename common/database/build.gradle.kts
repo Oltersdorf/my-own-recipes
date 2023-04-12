@@ -13,6 +13,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation(project(":common:api"))
                 implementation(Deps.Squareup.SQLDelight.coroutineExtensions)
             }
         }

@@ -1,4 +1,4 @@
-import com.olt.mor.common.database.data.Difficulty;
+import com.olt.mor.common.api.data.Difficulty;
 
 CREATE TABLE IF NOT EXISTS RawRecipe (
     id INTEGER PRIMARY KEY,

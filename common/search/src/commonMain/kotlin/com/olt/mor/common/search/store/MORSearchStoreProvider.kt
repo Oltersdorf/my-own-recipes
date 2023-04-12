@@ -4,9 +4,7 @@ import com.arkivanov.mvikotlin.core.store.Reducer
 import com.arkivanov.mvikotlin.core.store.SimpleBootstrapper
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
-import com.olt.mor.common.database.RawIngredient
-import com.olt.mor.common.database.RawTag
-import com.olt.mor.common.database.data.*
+import com.olt.mor.common.api.data.*
 import com.olt.mor.common.search.Filter
 import com.olt.mor.common.search.store.MORSearchStore.Intent
 import com.olt.mor.common.search.store.MORSearchStore.State
@@ -28,10 +26,10 @@ internal class MORSearchStoreProvider(
         ) {}
 
     private sealed class Message {
-        data class TagsLoaded(val tags: List<RawTag>) : Message()
-        data class IngredientsLoaded(val ingredients: List<RawIngredient>) : Message()
+        data class TagsLoaded(val tags: List<Tag.Existing>) : Message()
+        data class IngredientsLoaded(val ingredients: List<Ingredient.Existing>) : Message()
         data class SearchTermChanged(val newSearchTerm: String) : Message()
-        data class RecipesLoaded(val recipes: List<PreviewRecipe>) : Message()
+        data class RecipesLoaded(val recipes: List<RecipePreview>) : Message()
         data class FilterAdded(val filter: Filter) : Message()
         data class FilterRemoved(val filter: Filter) : Message()
     }
@@ -94,7 +92,7 @@ internal class MORSearchStoreProvider(
                 is Message.RecipesLoaded -> copy(recipes = msg.recipes)
             }
 
-        private fun getRecommendedFilters(searchTerm: String, availableTags: List<RawTag>, availableIngredients: List<RawIngredient>): List<Filter> {
+        private fun getRecommendedFilters(searchTerm: String, availableTags: List<Tag.Existing>, availableIngredients: List<Ingredient.Existing>): List<Filter> {
             val number = searchTerm.toIntOrNull()
             val filter = mutableListOf<Filter>()
             if (number != null && number >= 0) filter.addAll(getRecommendedNumberFilter(number))
@@ -116,19 +114,19 @@ internal class MORSearchStoreProvider(
             return filter.toList()
         }
 
-        private fun getRecommendedTextFilter(text: String, availableTags: List<RawTag>, availableIngredients: List<RawIngredient>): List<Filter> {
+        private fun getRecommendedTextFilter(text: String, availableTags: List<Tag.Existing>, availableIngredients: List<Ingredient.Existing>): List<Filter> {
             val filter = mutableListOf(Filter.Name(text), Filter.Author(text))
 
             filter.addAll(
                 availableTags
                     .filter { it.name.contains(other = text, ignoreCase = true) }
-                    .map { Filter.Tag(RecipeTag.ExistingTag(id = it.id, name = it.name)) }
+                    .map { Filter.Tag(Tag.Existing(id = it.id, name = it.name)) }
             )
 
             filter.addAll(
                 availableIngredients
                     .filter { it.name.contains(other = text, ignoreCase = true) }
-                    .map { Filter.Ingredient(RecipeIngredient.ExistingIngredient(id = it.id, name = it.name, amount = 0.0, unit = IngredientUnit.None)) }
+                    .map { Filter.Ingredient(Ingredient.Existing(id = it.id, name = it.name, amount = 0.0, unit = IngredientUnit.None)) }
             )
 
             return filter.toList()
@@ -136,11 +134,11 @@ internal class MORSearchStoreProvider(
     }
 
     interface Database {
-        val recipes: Flow<List<PreviewRecipe>>
+        val recipes: Flow<List<RecipePreview>>
 
-        val tags: Flow<List<RawTag>>
+        val tags: Flow<List<Tag.Existing>>
 
-        val ingredients: Flow<List<RawIngredient>>
+        val ingredients: Flow<List<Ingredient.Existing>>
 
         suspend fun searchRecipes(
             name: String,
@@ -148,8 +146,8 @@ internal class MORSearchStoreProvider(
             rating: Int,
             maxTime: Int,
             difficulty: Difficulty,
-            tags: List<RecipeTag.ExistingTag>,
-            ingredients: List<RecipeIngredient.ExistingIngredient>
+            tags: List<Tag.Existing>,
+            ingredients: List<Ingredient.Existing>
         )
     }
 }

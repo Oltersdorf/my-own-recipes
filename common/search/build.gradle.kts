@@ -6,7 +6,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":common:database"))
+                implementation(project(":common:api"))
                 implementation(project(":common:utils"))
                 implementation(Deps.JetBrains.Kotlin.coroutines)
                 implementation(Deps.ArkIvanov.MVIKotlin.mvikotlin)
@@ -16,6 +16,7 @@ kotlin {
         }
         commonTest {
             dependencies {
+                implementation(project(":common:database"))
                 implementation(Deps.ArkIvanov.MVIKotlin.mvikotlinMain)
             }
         }

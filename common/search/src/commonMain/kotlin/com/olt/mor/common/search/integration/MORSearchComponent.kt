@@ -5,7 +5,7 @@ import com.arkivanov.decompose.value.Value
 import com.arkivanov.decompose.value.operator.map
 import com.arkivanov.mvikotlin.core.instancekeeper.getStore
 import com.arkivanov.mvikotlin.core.store.StoreFactory
-import com.olt.mor.common.database.MORDatabase
+import com.olt.mor.common.api.database.MORDatabase
 import com.olt.mor.common.search.Filter
 import com.olt.mor.common.search.MORSearch
 import com.olt.mor.common.search.MORSearch.Model

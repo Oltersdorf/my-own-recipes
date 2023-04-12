@@ -1,4 +1,4 @@
-import com.olt.mor.common.database.data.IngredientUnit;
+import com.olt.mor.common.api.data.IngredientUnit;
 
 CREATE TABLE IF NOT EXISTS RecipeToIngredient (
     id INTEGER PRIMARY KEY,

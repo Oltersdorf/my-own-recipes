@@ -1,6 +1,6 @@
 package com.olt.mor.common.database
 
-import com.olt.mor.common.database.data.*
+import com.olt.mor.common.api.data.*
 import com.olt.mor.database.MyOwnRecipes
 import com.squareup.sqldelight.db.SqlDriver
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,8 +21,8 @@ class DefaultMORDatabaseTest {
         driver = createDriver()
         actualDatabase = MyOwnRecipes(
             driver = driver,
-            RawRecipeAdapter = RawRecipe.Adapter(difficultyAdapter = Difficulty.Adapter()),
-            RecipeToIngredientAdapter = RecipeToIngredient.Adapter(unitAdapter = IngredientUnit.Adapter())
+            RawRecipeAdapter = RawRecipe.Adapter(difficultyAdapter = DifficultyAdapter()),
+            RecipeToIngredientAdapter = RecipeToIngredient.Adapter(unitAdapter = IngredientUnitAdapter())
         )
         testDatabase = DefaultMORDatabase(database = actualDatabase)
     }
@@ -46,8 +46,8 @@ class DefaultMORDatabaseTest {
 
     @Test
     fun `WHEN recipe with known tags is added THEN tagLinks are added`() = runTest {
-        val tag1 = RecipeTag.ExistingTag(id = 1L, name = "tag 1")
-        val tag2 = RecipeTag.ExistingTag(id = 2L, name = "tag 2")
+        val tag1 = Tag.Existing(id = 1L, name = "tag 1")
+        val tag2 = Tag.Existing(id = 2L, name = "tag 2")
         actualDatabase.recipeQueries.addTag(tag1.name)
         actualDatabase.recipeQueries.addTag(tag2.name)
 
@@ -65,8 +65,8 @@ class DefaultMORDatabaseTest {
 
     @Test
     fun `WHEN recipe with unknown tags is added THEN new tags and tagLinks are added`() = runTest {
-        val tag1 = RecipeTag.NewTag(name = "tag 1")
-        val tag2 = RecipeTag.NewTag(name = "tag 2")
+        val tag1 = Tag.New(name = "tag 1")
+        val tag2 = Tag.New(name = "tag 2")
 
         val recipe = buildRecipe(tags = listOf(tag1, tag2))
         testDatabase.addRecipe(recipe)
@@ -91,8 +91,8 @@ class DefaultMORDatabaseTest {
 
     @Test
     fun `WHEN recipe with known ingredients is added THEN ingredientLinks are added`() = runTest {
-        val ingredient1 = RecipeIngredient.ExistingIngredient(id = 1L, name = "ingredient 1", amount = 1.124, unit = IngredientUnit.None)
-        val ingredient2 = RecipeIngredient.ExistingIngredient(id = 2L, name = "ingredient 2", amount = 1.254, unit = IngredientUnit.Pinch)
+        val ingredient1 = Ingredient.Existing(id = 1L, name = "ingredient 1", amount = 1.124, unit = IngredientUnit.None)
+        val ingredient2 = Ingredient.Existing(id = 2L, name = "ingredient 2", amount = 1.254, unit = IngredientUnit.Pinch)
         actualDatabase.recipeQueries.addIngredient(ingredient1.name)
         actualDatabase.recipeQueries.addIngredient(ingredient2.name)
 
@@ -110,8 +110,8 @@ class DefaultMORDatabaseTest {
 
     @Test
     fun `WHEN recipe with unknown ingredients is added THEN new ingredients and ingredientLinks are added`() = runTest {
-        val ingredient1 = RecipeIngredient.NewIngredient(name = "tag 1", amount = 1.124, unit = IngredientUnit.None)
-        val ingredient2 = RecipeIngredient.NewIngredient(name = "tag 2", amount = 1.254, unit = IngredientUnit.Pinch)
+        val ingredient1 = Ingredient.New(name = "tag 1", amount = 1.124, unit = IngredientUnit.None)
+        val ingredient2 = Ingredient.New(name = "tag 2", amount = 1.254, unit = IngredientUnit.Pinch)
 
         val recipe = buildRecipe(ingredients = listOf(ingredient1, ingredient2))
         testDatabase.addRecipe(recipe)
@@ -195,9 +195,9 @@ class DefaultMORDatabaseTest {
 
     @Test
     fun `WHEN recipe is selected THEN a correct recipe is returned`() = runTest {
-        val tag1 = RecipeTag.ExistingTag(id = 1L, name = "tag 1")
-        val tag2 = RecipeTag.ExistingTag(id = 2L, name = "tag 2")
-        val ingredient = RecipeIngredient.ExistingIngredient(id = 1L, name = "ingredient 1", amount = 1.0, unit = IngredientUnit.Pinch)
+        val tag1 = Tag.Existing(id = 1L, name = "tag 1")
+        val tag2 = Tag.Existing(id = 2L, name = "tag 2")
+        val ingredient = Ingredient.Existing(id = 1L, name = "ingredient 1", amount = 1.0, unit = IngredientUnit.Pinch)
         val expected = buildRecipe(tags = listOf(tag1, tag2), ingredients = listOf(ingredient))
         actualDatabase.recipeQueries.addTag(tag1.name)
         actualDatabase.recipeQueries.addTag(tag2.name)
@@ -238,9 +238,9 @@ class DefaultMORDatabaseTest {
     @Test
     fun `WHEN recipe is updated THEN tags are updated`() = runTest {
         val recipe = buildRecipe()
-        val tag1 = RecipeTag.ExistingTag(1L, "not changing")
-        val tag2 = RecipeTag.ExistingTag(2L, "to be deleted")
-        val tag3 = RecipeTag.NewTag("to be created")
+        val tag1 = Tag.Existing(1L, "not changing")
+        val tag2 = Tag.Existing(2L, "to be deleted")
+        val tag3 = Tag.New("to be created")
         actualDatabase.recipeQueries.addRecipe(name = recipe.name, author = recipe.author, rating = recipe.rating, workTimeInMinutes = recipe.workTimeInMinutes, cookTimeInMinutes = recipe.cookTimeInMinutes, difficulty = recipe.difficulty, portions = recipe.portions, text = recipe.text)
         actualDatabase.recipeQueries.addTag(tag1.name)
         actualDatabase.recipeQueries.addTag(tag2.name)
@@ -262,9 +262,9 @@ class DefaultMORDatabaseTest {
     @Test
     fun `WHEN recipe is updated THEN ingredients are updated`() = runTest {
         val recipe = buildRecipe()
-        val ingredient1 = RecipeIngredient.ExistingIngredient(id = 1L, name = "not changing", amount = 1.5, unit = IngredientUnit.TableSpoon)
-        val ingredient2 = RecipeIngredient.ExistingIngredient(id = 2L, name = "to be deleted", amount = 22.3, unit = IngredientUnit.Length)
-        val ingredient3 = RecipeIngredient.NewIngredient(name = "to be created", amount = 5.7, unit = IngredientUnit.Volume)
+        val ingredient1 = Ingredient.Existing(id = 1L, name = "not changing", amount = 1.5, unit = IngredientUnit.TableSpoon)
+        val ingredient2 = Ingredient.Existing(id = 2L, name = "to be deleted", amount = 22.3, unit = IngredientUnit.Length)
+        val ingredient3 = Ingredient.New(name = "to be created", amount = 5.7, unit = IngredientUnit.Volume)
         actualDatabase.recipeQueries.addRecipe(name = recipe.name, author = recipe.author, rating = recipe.rating, workTimeInMinutes = recipe.workTimeInMinutes, cookTimeInMinutes = recipe.cookTimeInMinutes, difficulty = recipe.difficulty, portions = recipe.portions, text = recipe.text)
         actualDatabase.recipeQueries.addIngredient(ingredient1.name)
         actualDatabase.recipeQueries.addIngredient(ingredient2.name)
@@ -290,8 +290,8 @@ class DefaultMORDatabaseTest {
         val ratingSearch = 3
         val maxTimeSearch = 40
         val difficultySearch = Difficulty.Hard
-        val filterTagsSearch = listOf(RecipeTag.ExistingTag(1L, "tag1"), RecipeTag.ExistingTag(2L, "tag2"))
-        val filterIngredientsSearch = listOf(RecipeIngredient.ExistingIngredient(1L, "ingredient", 1.0, IngredientUnit.None))
+        val filterTagsSearch = listOf(Tag.Existing(1L, "tag1"), Tag.Existing(2L, "tag2"))
+        val filterIngredientsSearch = listOf(Ingredient.Existing(1L, "ingredient", 1.0, IngredientUnit.None))
         val notSearchedRecipe = buildRecipe(tags = filterTagsSearch, ingredients = filterIngredientsSearch)
         val searchedRecipe = Recipe(id = 2L, name = nameSearch, author = authorSearch, rating = ratingSearch + 1, workTimeInMinutes = 20, cookTimeInMinutes = 20, difficulty = difficultySearch, portions = 1, text = "test", tags = filterTagsSearch, ingredients = filterIngredientsSearch)
 
@@ -310,20 +310,20 @@ class DefaultMORDatabaseTest {
         val actual = testDatabase.searchRecipe(name = nameSearch, author = authorSearch, rating = ratingSearch, maxTime = maxTimeSearch, difficulty = difficultySearch, tags = filterTagsSearch, ingredients = filterIngredientsSearch)
         advanceUntilIdle()
 
-        val expected = listOf(PreviewRecipe(id = searchedRecipe.id, name = searchedRecipe.name, author = searchedRecipe.author, rating = searchedRecipe.rating, difficulty = searchedRecipe.difficulty, time = searchedRecipe.cookTimeInMinutes + searchedRecipe.workTimeInMinutes, tags = filterTagsSearch))
+        val expected = listOf(RecipePreview(id = searchedRecipe.id, name = searchedRecipe.name, author = searchedRecipe.author, rating = searchedRecipe.rating, difficulty = searchedRecipe.difficulty, time = searchedRecipe.cookTimeInMinutes + searchedRecipe.workTimeInMinutes, tags = filterTagsSearch))
         assertContentEquals(expected, actual)
     }
 
     @Test
     fun `WHEN ingredients change THEN the change is observed`() = runTest {
-        val actual = mutableListOf<List<RawIngredient>>()
+        val actual = mutableListOf<List<Ingredient.Existing>>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             testDatabase.ingredients(testScheduler).toList(actual)
         }
 
-        val ingredient1 = RawIngredient(1L, "ingredient1")
+        val ingredient1 = Ingredient.Existing(1L, "ingredient1", amount = 0.0, unit = IngredientUnit.None)
         actualDatabase.recipeQueries.addIngredient(ingredient1.name)
-        val ingredient2 = RawIngredient(2L, "ingredient2")
+        val ingredient2 = Ingredient.Existing(2L, "ingredient2", amount = 0.0, unit = IngredientUnit.None)
         actualDatabase.recipeQueries.addIngredient(ingredient2.name)
         actualDatabase.recipeQueries.removeUnusedIngredients()
 
@@ -333,14 +333,14 @@ class DefaultMORDatabaseTest {
 
     @Test
     fun `WHEN tags change THEN the change is observed`() = runTest {
-        val actual = mutableListOf<List<RawTag>>()
+        val actual = mutableListOf<List<Tag.Existing>>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             testDatabase.tags(testScheduler).toList(actual)
         }
 
-        val tag1 = RawTag(1L, "tag1")
+        val tag1 = Tag.Existing(1L, "tag1")
         actualDatabase.recipeQueries.addTag(tag1.name)
-        val tag2 = RawTag(2L, "tag2")
+        val tag2 = Tag.Existing(2L, "tag2")
         actualDatabase.recipeQueries.addTag(tag2.name)
         actualDatabase.recipeQueries.removeUnusedTags()
 
@@ -353,8 +353,8 @@ expect fun createDriver() : SqlDriver
 
 private fun buildRecipe(
     id: Long = 1L,
-    tags: List<RecipeTag> = emptyList(),
-    ingredients: List<RecipeIngredient> = emptyList()
+    tags: List<Tag> = emptyList(),
+    ingredients: List<Ingredient> = emptyList()
 ) = Recipe(
     id = id,
     name = "test recipe",

@@ -1,7 +1,7 @@
 package com.olt.mor.common.search
 
 import com.arkivanov.decompose.value.Value
-import com.olt.mor.common.database.data.PreviewRecipe
+import com.olt.mor.common.api.data.RecipePreview
 
 interface MORSearch {
 
@@ -17,6 +17,6 @@ interface MORSearch {
         val searchTerm: String,
         val filterRecommendations: List<Filter>,
         val filters: List<Filter>,
-        val recipes: List<PreviewRecipe>
+        val recipes: List<RecipePreview>
     )
 }

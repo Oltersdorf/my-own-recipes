@@ -1,13 +1,14 @@
-package com.olt.mor.common.database.data
+package com.olt.mor.common.database
 
+import com.olt.mor.common.api.data.Difficulty
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-class DifficultyTest {
-    private val adapter = Difficulty.Adapter()
+class DifficultyAdapterTest {
+    private val adapter = DifficultyAdapter()
 
     private val encodeData = listOf(
         Difficulty.NotDefined to 0L,
